@@ -4,6 +4,7 @@ Created on Wed Feb 01 10:53:33 2017
 
 @author: Brandon Hong
 The purpose of this program is to interface with the OMRON V68OS-HMD63 RF tag Reader/Writer. 
+Current version: 0.0.1
 """
 import socket
 from time import sleep
