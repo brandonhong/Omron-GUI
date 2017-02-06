@@ -1,0 +1,116 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Feb 03 10:12:47 2017
+
+@author: RSC-Ltd-14
+"""
+
+import os
+from Tkinter import *
+import tkFileDialog
+from _RFID import *
+
+class GUI(Tk):
+    def __init__(self, parent):
+        Tk.__init__(self, parent)
+        self.parent = parent
+        self.initialize()
+        
+    def initialize(self):
+        global callback
+        global filename
+        filename = ''
+        callback = False        
+        
+        self.entryText = StringVar(self)         
+        self.entryText.set("Upload Lot Parameter File...")
+        
+        self.entry = Entry(self, width = 50, textvariable = self.entryText, fg = "gray")
+        self.entry.bind("<Button-1>", self.entry_callback)
+        
+        self.browse = Button(self, width = 9, text = "Browse",command=self.browse_dir)
+        
+        self.close = Button(self, width = 9, text = "Quit", command = self.close_window)
+        
+        self.start = Button(self, width = 9, text = "Start Write", command = self.reader)
+        
+        self.detailsTitle = Label(self, text = "Details")
+        
+        self.deets = StringVar(self)
+        self.details = Message(self, textvariable = self.deets, aspect = 600)
+        
+        self.grid()
+        self.entry.grid(row = 0, column = 0, padx = 20, pady = 20)
+        self.browse.grid(row = 0, column = 1, sticky = W, padx = 5)
+        self.close.grid(row = 0, column = 2, sticky = W, padx = 5)
+        self.start.grid(row = 1, column = 1, columnspan = 2, sticky = EW, padx = 5)        
+        self.detailsTitle.grid(row = 2, column = 0, sticky = W, padx = 20)
+        self.details.grid(row = 3, column = 0, padx = 20, pady = 5, sticky = W)
+        
+    def close_window(self):
+        self.destroy()
+    
+    def browse_dir(self):
+        global callback
+        global filename
+        filename = tkFileDialog.askopenfilename()
+        if (callback == False) and (filename != ''):
+            callback = True
+            self.entry.delete(0, "end")
+            self.entry.config(fg = "black")
+        self.entry.insert(0, filename)
+        
+    def entry_callback(self, event):
+        global callback
+        if callback == False:        
+            self.entry.delete(0, "end")
+            self.entry.config(fg = "black")
+            callback = True
+    
+    def combine_funcs(self, *funcs):
+        def combined_func(*args, **kwargs):
+            for f in funcs:
+                f(*args, **kwargs)
+        return combined_func
+    
+    def reader(self):
+        global filename
+        if os.path.isfile(filename) and filename.endswith(".xml"):
+            written, details = writeRequest(filename)
+            if written and details == "000000000006ff1000000040000000000006ff1000400040":
+                verify, read = verifyWrite(filename)
+            elif (not written and details == '') or (not written and details == "000000000006ff1000000040"):
+                self.deets.set("RF tag write failed. Timed out")
+                return False
+            elif not written and details[:14] == "Error occurred":
+                self.deets.set("RF tag write failed. {}".format(details))
+                return False
+            elif not written and details == "Not connected to RF device. Check connection":
+                self.deets.set("RF tag write failed. {}".format(details))
+                return False
+            else:
+                self.deets.set("Unknown error occurred during write")
+                return False
+            if verify and len(read) == 512:
+                self.deets.set("Write complete")
+                return True
+            elif (not verify and read == '') or (not verify and len(read) == 256):
+                self.deets.set("RF tag written but content verfication timed out")
+                return False
+            elif (not verify and read[:14] == "Error occurred") or (not verify and read == "Not connected to RF device. Check connection"):
+                self.deets.set("RF tag written but content verification failed. {}".format(read))
+                return False
+            elif not verify and len(read) == 512:
+                self.deets.set("RF tag written but contents do not match original file contents")
+                return False
+            else:
+                self.deets.set("RF tag written but unknown error occurred during content verification")
+                return False
+        else:
+            self.deets.set("Upload valid Lot Parameter File")
+            return False
+            
+if __name__ == "__main__":
+    app = GUI(None)
+    app.title('Graphical User Interface for RF Reader/Writer v0.0.1')
+    app.mainloop()
