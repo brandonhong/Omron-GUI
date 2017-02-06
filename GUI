@@ -2,7 +2,10 @@
 """
 Created on Fri Feb 03 10:12:47 2017
 
-@author: RSC-Ltd-14
+@author: Brandon Hong
+Purpose: Create a simple GUI for the interface between Windows computer and Omron V680S-HMD63 device. 
+The code below is intended to later become a standalone exe file using py2exe. 
+Current version: 0.0.1
 """
 
 import os
