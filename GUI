@@ -5,15 +5,14 @@ Created on Fri Feb 03 10:12:47 2017
 @author: Brandon Hong
 Purpose: Create a simple GUI for the interface between Windows computer and Omron V680S-HMD63 device. 
 The code below is intended to later become a standalone exe file using py2exe. 
-
-Bugs relating to disconnected device fixed.
-Current version: 0.0.2
 """
 
 import os
 from Tkinter import *
 import tkFileDialog
 from _RFID import *
+
+version = '0.0.3'
 
 class GUI(Tk):
     def __init__(self, parent):
@@ -24,8 +23,10 @@ class GUI(Tk):
     def initialize(self):
         global callback
         global filename
+        global fileOpts
         filename = ''
-        callback = False        
+        fileOpts = dict(defaultextension='.xml', filetypes=[('Lot Parameter File','*.xml')])
+        callback = False                     
         
         self.entryText = StringVar(self)         
         self.entryText.set("Upload Lot Parameter File...")
@@ -44,11 +45,15 @@ class GUI(Tk):
         self.deets = StringVar(self)
         self.details = Message(self, textvariable = self.deets, aspect = 600)
         
+#        self.status = Canvas(self, width = 30, height = 30)   
+#        self.circle = self.status.create_oval(7.5, 7.5, 22.5, 22.5, fill = "green", width = 0.5)
+        
         self.grid()
         self.entry.grid(row = 0, column = 0, padx = 20, pady = 20)
         self.browse.grid(row = 0, column = 1, sticky = W, padx = 5)
         self.close.grid(row = 0, column = 2, sticky = W, padx = 5)
-        self.start.grid(row = 1, column = 1, columnspan = 2, sticky = EW, padx = 5)        
+        self.start.grid(row = 1, column = 1, sticky = EW, padx = 5)     
+#        self.status.grid(row = 1, column = 2)
         self.detailsTitle.grid(row = 2, column = 0, sticky = W, padx = 20)
         self.details.grid(row = 3, column = 0, padx = 20, pady = 5, sticky = W)
         
@@ -57,13 +62,13 @@ class GUI(Tk):
     
     def browse_dir(self):
         global callback
-        global filename
-        filename = tkFileDialog.askopenfilename()
-        if (callback == False) and (filename != ''):
+        global fileOpts
+        if (callback == False):
             callback = True
             self.entry.delete(0, "end")
             self.entry.config(fg = "black")
-        self.entry.insert(0, filename)
+        self.entry.delete(0, "end")
+        self.entry.insert(0, tkFileDialog.askopenfilename(**fileOpts))
         
     def entry_callback(self, event):
         global callback
@@ -80,6 +85,8 @@ class GUI(Tk):
     
     def reader(self):
         global filename
+#        self.status.itemconfig(self.circle, fill = "#ffff99")
+        filename = self.entry.get()
         if os.path.isfile(filename) and filename.endswith(".xml"):
             written, details = writeRequest(filename)
             if written and details == "000000000006ff1000000040000000000006ff1000400040":
@@ -117,5 +124,5 @@ class GUI(Tk):
             
 if __name__ == "__main__":
     app = GUI(None)
-    app.title('Graphical User Interface for RF Reader/Writer v0.0.1')
+    app.title('Graphical User Interface for RF Reader/Writer v{}'.format(version))
     app.mainloop()
