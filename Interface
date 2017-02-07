@@ -4,7 +4,7 @@ Created on Wed Feb 01 10:53:33 2017
 
 @author: Brandon Hong
 The purpose of this program is to interface with the OMRON V68OS-HMD63 RF tag Reader/Writer. 
-Current version: 0.0.1
+Current version: 0.0.2
 """
 import socket
 from time import sleep
@@ -69,10 +69,11 @@ def xmlRead(filename):
 
 def stop(sock):
     '''Terminates the RF read/write operation'''
-    if sock in locals():
+    try:
+        sock.settimeout(.5)
         sock.sendall(strToHex('000000000009ff10D1000001020000'))
         return True
-    else:
+    except Exception:
         return False
 
 def readRequest():
