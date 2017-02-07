@@ -6,5 +6,18 @@ a library for the computer-module interface and a py file for a simple GUI. Much
 to have the project up and running. 
 
 Update to v0.0.2
-  Bug fixes to disconnected device
-    Function stop(sock) did not work as intended. Time outs would trigger stop(sock) as a result of line 72 in v0.0.1 always returning False. The function was rewritten using try/except and writing to the device. If the device is disconnected or powered off then the function will return False. If the query is received then it will return True.
+  GUI:
+    Bug fixes to disconnected device:
+    Function stop(sock) did not work as intended. Time outs would trigger stop(sock) as a result of line 72 in v0.0.1 always returning
+    False. The function was rewritten using try/except and writing to the device. If the device is disconnected or powered off then the 
+    function will return False. If the query is received then it will return True.
+
+Update to v0.0.3
+  GUI:
+    Added default file extension in browse directory to be .xml. fileOpts variable added as global variable under initialize function.
+    Changed column span of start button to 1 for future implementation of status button.
+    Fixed bug where browsing more than once would not delete the old entry in directory and instead add to the string.
+    Fixed bug where changing the file directory after having a valid directory did not update filename variable. filename variable 
+    assignment added to the beginning of reader function. filename variable assignment removed from browse_dir function.
+  GUI:
+    Changed timeout for reading/writing to 3s from 5s.
