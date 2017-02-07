@@ -19,5 +19,5 @@ Update to v0.0.3
     Fixed bug where browsing more than once would not delete the old entry in directory and instead add to the string.
     Fixed bug where changing the file directory after having a valid directory did not update filename variable. filename variable 
     assignment added to the beginning of reader function. filename variable assignment removed from browse_dir function.
-  GUI:
+  Interface:
     Changed timeout for reading/writing to 3s from 5s.
