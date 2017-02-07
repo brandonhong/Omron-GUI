@@ -5,8 +5,6 @@ Created on Wed Feb 01 10:53:33 2017
 @author: Brandon Hong
 The purpose of this program is to interface with the OMRON V68OS-HMD63 RF tag Reader/Writer. 
 
-Bugs relating to disconnected device fixed.
-Current version: 0.0.2
 """
 import socket
 from time import sleep
@@ -64,10 +62,10 @@ def xmlRead(filename):
         for vals in value:
             query += hex(vals)[2:].zfill(2).decode('hex')
 #            query2 += hex(vals)[2:].zfill(2)
-    
+        
     first = query[:len(query)/2]
     second = query[len(query)/2:]
-    return first, second    
+    return first, second  
 
 def stop(sock):
     '''Terminates the RF read/write operation'''
@@ -82,14 +80,14 @@ def readRequest():
     '''Requests to read RF tag. Waits for the Reader to read RF tag and listens to response'''
     try: 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(1)
+        sock.settimeout(1) #1 second timeout period to connect to device
         sock.connect(addr)
         reg_addr = hex(0)[2:].zfill(4).decode('hex')
         word_count = hex(64)[2:].zfill(4).decode('hex')
         received = ''
         for i in range(2):
             query = strToHex('000000000006FF03') + reg_addr + word_count
-            sock.settimeout(5) #5 second timeout period for RF tag pickup and query
+            sock.settimeout(3) #3 second timeout period for RF tag pickup and query
             sock.sendall(query)
             data = sock.recv(1024)
             if data[7] == '83'.decode('hex'):
@@ -114,7 +112,7 @@ def writeRequest(filename):
     try:
         xml = xmlRead(filename)
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(1)
+        sock.settimeout(1) #1 second timeout period to connect to device
         sock.connect(addr)
         reg_addr = hex(0)[2:].zfill(4).decode('hex')
         word_count = hex(64)[2:].zfill(4).decode('hex')
@@ -122,7 +120,7 @@ def writeRequest(filename):
         received = ''
         for i in xml:
             query = strToHex('000000000087FF10') + reg_addr + word_count + byte_count + i
-            sock.settimeout(5) #5 second timeout period for FR tag pickup and query
+            sock.settimeout(3) #3 second timeout period for FR tag pickup and query
             sock.sendall(query)
             data = sock.recv(1024)
             if data[7] == '90'.decode('hex'):
