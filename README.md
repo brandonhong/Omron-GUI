@@ -27,6 +27,7 @@ Update to v0.0.v4
     Fixed bug where exiting file directory deletes the entry. Closing file directory with a string in entry no longer deletes it. 
     Added a counter for the number of RF tags successfully written. Declared as self.counter. Counter increments upon successful
     execution of self.reader.
+    Added additional window pop-up for quit verification. Window pops up upon hitting quit button or close.
   Interface:
     Changed timeout for reading/writing to 2s from 3s.
     Added timeout and timeout error to setTCP_IP() function.
