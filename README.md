@@ -21,3 +21,12 @@ Update to v0.0.3
     assignment added to the beginning of reader function. filename variable assignment removed from browse_dir function.
   Interface:
     Changed timeout for reading/writing to 3s from 5s.
+
+Update to v0.0.v4
+  GUI:
+    Fixed bug where exiting file directory deletes the entry. Closing file directory with a string in entry no longer deletes it. 
+    Added a counter for the number of RF tags successfully written. Declared as self.counter. Counter increments upon successful
+    execution of self.reader.
+  Interface:
+    Changed timeout for reading/writing to 2s from 3s.
+    Added timeout and timeout error to setTCP_IP() function.
