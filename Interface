@@ -20,6 +20,7 @@ def setTCP_IP(curr_addr, addr, subnet, gateway):
     '''Sets IP address, subnet, and gateway. Write in format 'xxxxxxxxxxxx' to represent xxx.xxx.xxx.xxx
     curr_addr is in the format of ('xxx.xxx.xxx.xxx', xxx) similar to addr'''
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.settimeout(1) #1 second timeout period to connect to device
     sock.connect(curr_addr)
     end = ''
     try:
@@ -28,6 +29,8 @@ def setTCP_IP(curr_addr, addr, subnet, gateway):
                 end += hex(int(j))[2:].zfill(2).decode('hex')
     except AttributeError:
         print 'Please write in string format'
+    except Exception as exception:
+        print exception
     query = strToHex('000000000013FF10B80000060C') + end
     sock.sendall(query)
     data = sock.recv(1024)
@@ -78,6 +81,7 @@ def stop(sock):
 def readRequest():
     '''Requests to read RF tag. Waits for the Reader to read RF tag and listens to response'''
     try: 
+        global sock
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(1) #1 second timeout period to connect to device
         sock.connect(addr)
@@ -86,11 +90,13 @@ def readRequest():
         received = ''
         for i in range(2):
             query = strToHex('000000000006FF03') + reg_addr + word_count
-            sock.settimeout(3) #3 second timeout period for RF tag pickup and query
+            sock.settimeout(2) #2 second timeout period for RF tag pickup and query
             sock.sendall(query)
             data = sock.recv(1024)
             if data[7] == '83'.decode('hex'):
                 sock.close()
+                print 'no work'
+                stop(sock)
                 return False, ('Error occurred. {}: Code {}'.format(data[8].encode('hex'), errLib(data[8].encode('hex'))))
             received += data[9:]
             reg_addr = word_count
@@ -99,6 +105,8 @@ def readRequest():
         return True, received.encode('hex')
     except Exception as exception:
 #        print exception, ': ' + 'readRequest() did not work'
+        sock.settimeout(1)
+        data = sock.recv(1024)
         stopped = stop(sock)
         sock.close()
         if stopped:
@@ -109,6 +117,7 @@ def readRequest():
 def writeRequest(filename):
     '''Requests to write to RF tag. Waits for the Reader to pick up tag then writes to it'''
     try:
+        global sock
         xml = xmlRead(filename)
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(1) #1 second timeout period to connect to device
@@ -119,11 +128,13 @@ def writeRequest(filename):
         received = ''
         for i in xml:
             query = strToHex('000000000087FF10') + reg_addr + word_count + byte_count + i
-            sock.settimeout(3) #3 second timeout period for FR tag pickup and query
+            sock.settimeout(2) #2 second timeout period for FR tag pickup and query
             sock.sendall(query)
             data = sock.recv(1024)
             if data[7] == '90'.decode('hex'):
-                sock.close()
+#                sock.close()
+                print 'no work'
+                stop(sock)
                 return False, ('Error occurred. {}: Code {}'.format(data[8].encode('hex'), errLib(data[8].encode('hex'))))
 #            print data.encode('hex')
             received += data
