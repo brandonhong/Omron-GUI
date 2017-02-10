@@ -93,8 +93,8 @@ def readRequest():
             sock.sendall(query)
             data = sock.recv(1024)
             if data[7] == '83'.decode('hex'):
-                sock.close()
                 stop(sock)
+                sock.close()
                 return False, ('Error occurred. {}: Code {}'.format(data[8].encode('hex'), errLib(data[8].encode('hex'))))
             received += data[9:]
             reg_addr = word_count
@@ -103,8 +103,6 @@ def readRequest():
         return True, received.encode('hex')
     except Exception as exception:
 #        print exception, ': ' + 'readRequest() did not work'
-        sock.settimeout(1)
-        data = sock.recv(1024)
         stopped = stop(sock)
         sock.close()
         if stopped:
@@ -129,8 +127,8 @@ def writeRequest(filename):
             sock.sendall(query)
             data = sock.recv(1024)
             if data[7] == '90'.decode('hex'):
-#                sock.close()
                 stop(sock)
+                sock.close()
                 return False, ('Error occurred. {}: Code {}'.format(data[8].encode('hex'), errLib(data[8].encode('hex'))))
 #            print data.encode('hex')
             received += data
