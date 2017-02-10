@@ -94,7 +94,6 @@ def readRequest():
             data = sock.recv(1024)
             if data[7] == '83'.decode('hex'):
                 sock.close()
-                print 'no work'
                 stop(sock)
                 return False, ('Error occurred. {}: Code {}'.format(data[8].encode('hex'), errLib(data[8].encode('hex'))))
             received += data[9:]
@@ -131,7 +130,6 @@ def writeRequest(filename):
             data = sock.recv(1024)
             if data[7] == '90'.decode('hex'):
 #                sock.close()
-                print 'no work'
                 stop(sock)
                 return False, ('Error occurred. {}: Code {}'.format(data[8].encode('hex'), errLib(data[8].encode('hex'))))
 #            print data.encode('hex')
