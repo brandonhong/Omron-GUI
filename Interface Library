@@ -136,7 +136,7 @@ def readRequest():
             if data[7] == '83'.decode('hex'):
                 stop(sock)
                 sock.close()
-                print repr(data)
+#                print repr(data)
                 return False, ('Error occurred. {}: Code {}'.format(data[8].encode('hex'), errLib(data[8].encode('hex'))))
             received += data[9:]
             reg_addr = word_count
