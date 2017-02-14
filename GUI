@@ -9,10 +9,11 @@ The code below is intended to later become a standalone exe file using py2exe.
 
 import os
 from Tkinter import *
+import tkMessageBox
 import tkFileDialog
 from _RFID import *
 
-version = '0.0.3'
+version = '0.0.4'
 
 class GUI(Tk):
     def __init__(self, parent):
@@ -24,6 +25,8 @@ class GUI(Tk):
         global callback
         global filename
         global fileOpts
+        global count
+        count = 0
         filename = ''
         fileOpts = dict(defaultextension='.xml', filetypes=[('Lot Parameter File','*.xml')])
         callback = False                     
@@ -34,9 +37,9 @@ class GUI(Tk):
         self.entry = Entry(self, width = 50, textvariable = self.entryText, fg = "gray")
         self.entry.bind("<Button-1>", self.entry_callback)
         
-        self.browse = Button(self, width = 9, text = "Browse",command=self.browse_dir)
+        self.browse = Button(self, width = 9, text = "Browse",command = self.browse_dir)
         
-        self.close = Button(self, width = 9, text = "Quit", command = self.close_window)
+        self.close = Button(self, width = 9, text = "Quit", command = self.on_closing)
         
         self.start = Button(self, width = 9, text = "Start Write", command = self.reader)
         
@@ -45,30 +48,32 @@ class GUI(Tk):
         self.deets = StringVar(self)
         self.details = Message(self, textvariable = self.deets, aspect = 600)
         
-#        self.status = Canvas(self, width = 30, height = 30)   
-#        self.circle = self.status.create_oval(7.5, 7.5, 22.5, 22.5, fill = "green", width = 0.5)
-        
+        self.counter = StringVar(self)
+        self.status = Label(self, width = 18, textvariable = self.counter) 
+        self.counter.set("Successful Writes: {}".format(count))
+                
         self.grid()
         self.entry.grid(row = 0, column = 0, padx = 20, pady = 20)
         self.browse.grid(row = 0, column = 1, sticky = W, padx = 5)
         self.close.grid(row = 0, column = 2, sticky = W, padx = 5)
-        self.start.grid(row = 1, column = 1, sticky = EW, padx = 5)     
-#        self.status.grid(row = 1, column = 2)
+        self.start.grid(row = 1, column = 1, sticky = EW, padx = 5)   
+        self.status.grid(row = 2, column = 1, columnspan = 2, sticky = EW)
         self.detailsTitle.grid(row = 2, column = 0, sticky = W, padx = 20)
         self.details.grid(row = 3, column = 0, padx = 20, pady = 5, sticky = W)
-        
-    def close_window(self):
-        self.destroy()
     
     def browse_dir(self):
         global callback
         global fileOpts
-        if (callback == False):
-            callback = True
-            self.entry.delete(0, "end")
-            self.entry.config(fg = "black")
+        tempName = self.entry.get()
+        self.entry_callback(self)
         self.entry.delete(0, "end")
         self.entry.insert(0, tkFileDialog.askopenfilename(**fileOpts))
+        if self.entry.get() == '':
+            if tempName  == "Upload Lot Parameter File...":
+                callback = False
+                self.entry.config(fg = "gray")
+            else:                
+                self.entry.insert(0, tempName)
         
     def entry_callback(self, event):
         global callback
@@ -82,10 +87,13 @@ class GUI(Tk):
             for f in funcs:
                 f(*args, **kwargs)
         return combined_func
-    
+            
+    def on_closing(self):
+        if tkMessageBox.askokcancel("Quit", "Are you sure you want to quit?"):
+            self.destroy()            
+            
     def reader(self):
         global filename
-#        self.status.itemconfig(self.circle, fill = "#ffff99")
         filename = self.entry.get()
         if os.path.isfile(filename) and filename.endswith(".xml"):
             written, details = writeRequest(filename)
@@ -105,6 +113,9 @@ class GUI(Tk):
                 return False
             if verify and len(read) == 512:
                 self.deets.set("Write complete")
+                global count
+                count += 1
+                self.counter.set("Successful Writes: {}".format(count))
                 return True
             elif (not verify and read == '') or (not verify and len(read) == 256):
                 self.deets.set("RF tag written but content verfication timed out")
@@ -124,5 +135,6 @@ class GUI(Tk):
             
 if __name__ == "__main__":
     app = GUI(None)
-    app.title('Graphical User Interface for RF Reader/Writer v{}'.format(version))
+    app.title("Graphical User Interface for RF Reader/Writer v{}".format(version))
+    app.protocol("WM_DELETE_WINDOW", app.on_closing)
     app.mainloop()
