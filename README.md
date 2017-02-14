@@ -6,28 +6,44 @@ a library for the computer-module interface and a py file for a simple GUI. Much
 to have the project up and running. 
 
 Update to v0.0.2
-  GUI:
-    Bug fixes to disconnected device:
-    Function stop(sock) did not work as intended. Time outs would trigger stop(sock) as a result of line 72 in v0.0.1 always returning
-    False. The function was rewritten using try/except and writing to the device. If the device is disconnected or powered off then the 
-    function will return False. If the query is received then it will return True.
+
+GUI:
+Bug fixes to disconnected device:
+Function stop(sock) did not work as intended. Time outs would trigger stop(sock) as a result of line 72 in v0.0.1 always returning
+False. The function was rewritten using try/except and writing to the device. If the device is disconnected or powered off then the 
+function will return False. If the query is received then it will return True.
 
 Update to v0.0.3
-  GUI:
-    Added default file extension in browse directory to be .xml. fileOpts variable added as global variable under initialize function.
-    Changed column span of start button to 1 for future implementation of status button.
-    Fixed bug where browsing more than once would not delete the old entry in directory and instead add to the string.
-    Fixed bug where changing the file directory after having a valid directory did not update filename variable. filename variable 
-    assignment added to the beginning of reader function. filename variable assignment removed from browse_dir function.
-  Interface:
-    Changed timeout for reading/writing to 3s from 5s.
+  
+GUI:
+Added default file extension in browse directory to be .xml. fileOpts variable added as global variable under initialize function.
+Changed column span of start button to 1 for future implementation of status button.
+Fixed bug where browsing more than once would not delete the old entry in directory and instead add to the string.
+Fixed bug where changing the file directory after having a valid directory did not update filename variable. filename variable 
+assignment added to the beginning of reader function. filename variable assignment removed from browse_dir function.
 
-Update to v0.0.v4
-  GUI:
-    Fixed bug where exiting file directory deletes the entry. Closing file directory with a string in entry no longer deletes it. 
-    Added a counter for the number of RF tags successfully written. Declared as self.counter. Counter increments upon successful
-    execution of self.reader.
-    Added additional window pop-up for quit verification. Window pops up upon hitting quit button or close.
-  Interface:
-    Changed timeout for reading/writing to 2s from 3s.
-    Added timeout and timeout error to setTCP_IP() function.
+Interface:
+Changed timeout for reading/writing to 3s from 5s.
+
+Update to v0.0.4
+
+GUI:
+Fixed bug where exiting file directory deletes the entry. Closing file directory with a string in entry no longer deletes it. 
+Added a counter for the number of RFID tags successfully written. Declared as self.counter. Counter increments upon successful
+execution of self.reader.
+Added additional window pop-up for quit verification. Window pops up upon hitting quit button or close.
+
+Interface:
+Changed timeout for reading/writing to 2s from 3s.
+Added timeout and timeout error to setTCP_IP() function.
+
+Update to v0.0.5
+
+GUI:
+Added a checkbutton self.lockCheck to enable or disable the lock write feature of the RF read/write device. Check to enable. Enabling the lock feature will lock the contents of the RFID tag and make it read-only. Locking cannot be undone. 
+
+Interface:
+Updated function discriptions of each function with example inputs and outputs.
+Updated purpose discription.
+Added makeRFNum() function to print a list of 256 numbers in similar format of xml-files read-in.
+Added lock() function to lock the writing feature of RFID tags. Cannot be unlocked once locked.
