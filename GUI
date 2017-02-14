@@ -13,7 +13,7 @@ import tkMessageBox
 import tkFileDialog
 from _RFID import *
 
-version = '0.0.4'
+version = '0.0.5'
 
 class GUI(Tk):
     def __init__(self, parent):
@@ -51,11 +51,15 @@ class GUI(Tk):
         self.counter = StringVar(self)
         self.status = Label(self, width = 18, textvariable = self.counter) 
         self.counter.set("Successful Writes: {}".format(count))
+        
+        self.lock = IntVar(self)
+        self.lockCheck = Checkbutton(self, text = "Lock after write", variable = self.lock)
                 
         self.grid()
         self.entry.grid(row = 0, column = 0, padx = 20, pady = 20)
         self.browse.grid(row = 0, column = 1, sticky = W, padx = 5)
         self.close.grid(row = 0, column = 2, sticky = W, padx = 5)
+        self.lockCheck.grid(row = 1, column = 0, sticky = W, padx = 15)
         self.start.grid(row = 1, column = 1, sticky = EW, padx = 5)   
         self.status.grid(row = 2, column = 1, columnspan = 2, sticky = EW)
         self.detailsTitle.grid(row = 2, column = 0, sticky = W, padx = 20)
@@ -112,11 +116,26 @@ class GUI(Tk):
                 self.deets.set("Unknown error occurred during write")
                 return False
             if verify and len(read) == 512:
-                self.deets.set("Write complete")
                 global count
                 count += 1
                 self.counter.set("Successful Writes: {}".format(count))
-                return True
+                if self.lock.get() == 1:
+                    lockTag = lock()
+                    if lockTag == (True, "000000000006ff10a2000002"):
+                        self.deets.set("Write complete\nLocked")
+                        return True
+                    elif lockTag[0] == False and lockTag[1][:14] == "Error occurred":
+                        self.deets.set("Write complete but lock failed. {}".format(lockTag[1]))
+                        return False
+                    elif lockTag == (False, ''):
+                        self.deets.set("Write complete but lock failed. Timed out")
+                        return False
+                    else:
+                        self.deets.set("Write complete but lock failed. Not connected to RF device. Check connection")
+                        return False
+                else:
+                    self.deets.set("Write complete")
+                    return True
             elif (not verify and read == '') or (not verify and len(read) == 256):
                 self.deets.set("RF tag written but content verfication timed out")
                 return False
