@@ -209,29 +209,41 @@ def verifyWrite(filename):
     received = readRequest()[1]
     return (received == ''.join(xml)), received
 
-def makeRFNum(string):
-    '''Returns decimal representation of hex string similar to representation in xml file
+def makeRFFile(string):
+    '''Returns decimal representation of hex string similar to representation in xml file as well as create the xml file as output.xml
 
-    Example: makeRFNum('ffffffffffffffffffff...ffffffffffff')
+    Example: makeRFFile('ffffffffffffffffffff...ffffffffffff')
     
     Output: 255 255 255 255 255 255 255 255 255 255      0
              .
              .
              .
              255 255 255 255 255 255      250
+             
+             output.xml
     '''
-    num = ''
+    num = ''   
     count = 0
+    variables = et.Element("variables")
+    cache = et.SubElement(variables, "cache").text = "1"
     for i in string:
         if len(num) != 20:
             num += i
         else:
             num = ' '.join(str(int(a+b, 16)) for a,b in zip(num[::2], num[1::2]))
+            variable = et.SubElement(variables, "variable")
+            name = et.SubElement(variable, "name").text = "gaubRFID_Buffer[{}]".format(count)
+            value = et.SubElement(variable, "value").text = num
             print num, '\t', count
             num = i
             count += 10
     num = ' '.join(str(int(a+b, 16)) for a,b in zip(num[::2], num[1::2]))
+    variable = et.SubElement(variables, "variable")
+    name = et.SubElement(variable, "name").text = "gaubRFID_Buffer[{}]".format(count)
+    value = et.SubElement(variable, "value").text = num
     print num, '\t', count
+    tree = et.ElementTree(variables)
+    tree.write("output.xml", encoding="iso-8859-1", xml_declaration=True, method="xml")
     
 def lock():
     '''Locks the RFID tag write feature and cannot be undone
