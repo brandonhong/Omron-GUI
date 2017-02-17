@@ -214,11 +214,11 @@ def makeRFFile(string):
 
     Example: makeRFFile('ffffffffffffffffffff...ffffffffffff')
     
-    Output: 255 255 255 255 255 255 255 255 255 255      0
+    Output:  0      255 255 255 255 255 255 255 255 255 255
              .
              .
              .
-             255 255 255 255 255 255      250
+             250      255 255 255 255 255 255
              
              output.xml
     '''
@@ -234,14 +234,14 @@ def makeRFFile(string):
             variable = et.SubElement(variables, "variable")
             name = et.SubElement(variable, "name").text = "gaubRFID_Buffer[{}]".format(count)
             value = et.SubElement(variable, "value").text = num
-            print num, '\t', count
+            print count, '\t', num
             num = i
             count += 10
     num = ' '.join(str(int(a+b, 16)) for a,b in zip(num[::2], num[1::2]))
     variable = et.SubElement(variables, "variable")
     name = et.SubElement(variable, "name").text = "gaubRFID_Buffer[{}]".format(count)
     value = et.SubElement(variable, "value").text = num
-    print num, '\t', count
+    print count, '\t', num
     tree = et.ElementTree(variables)
     tree.write("output.xml", encoding="iso-8859-1", xml_declaration=True, method="xml")
     
