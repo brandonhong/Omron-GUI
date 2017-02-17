@@ -45,5 +45,5 @@ Added a checkbutton self.lockCheck to enable or disable the lock write feature o
 Interface:
 Updated function discriptions of each function with example inputs and outputs.
 Updated purpose discription.
-Added makeRFNum() function to print a list of 256 numbers in similar format of xml-files read-in.
+Added makeRFFile() function to print a list of 256 numbers in similar format of xml-files read-in and writes an xml-file in the same format.
 Added lock() function to lock the writing feature of RFID tags. Cannot be unlocked once locked.
