@@ -137,7 +137,7 @@ def readRequest():
                 stop(sock)
                 sock.close()
 #                print repr(data)
-                return False, ('Error occurred. {}: Code {}'.format(data[8].encode('hex'), errLib(data[8].encode('hex'))))
+                return False, ('Error occurred. {}: Code {}'.format(data[8:].encode('hex'), errLib(data[8:].encode('hex'))))
             received += data[9:]
             reg_addr = word_count
 #            print repr(data).decode('hex')
@@ -182,7 +182,7 @@ def writeRequest(filename):
                 stop(sock)
                 sock.close()
 #                print repr(data)
-                return False, ('Error occurred. {}: Code {}'.format(data[8].encode('hex'), errLib(data[8].encode('hex'))))
+                return False, ('Error occurred. {}: Code {}'.format(data[8:].encode('hex'), errLib(data[8:].encode('hex'))))
 #            print data.encode('hex')
             received += data
             reg_addr = word_count
@@ -268,7 +268,7 @@ def lock():
         if data[7] == '90'.decode('hex'):
             stop(sock)
             sock.close()
-            return False, ('Error occurred. {}: Code {}'.format(data[8].encode('hex'), errLib(data[8].encode('hex'))))
+            return False, ('Error occurred. {}: Code {}'.format(data[8:].encode('hex'), errLib(data[8:].encode('hex'))))
 #            print data.encode('hex')
         received += data
         sock.close()
