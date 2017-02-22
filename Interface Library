@@ -106,9 +106,9 @@ def stop(sock):
     try:
         sock.settimeout(.5)
         sock.sendall(strToHex('000000000009ff10D1000001020000'))
-        return True, sock.recv(1024)
+        return True
     except Exception:
-        return False, sock.recv(1024)
+        return False
 
 def readRequest():
     '''Requests to read RFID tag. Waits for the Reader to read RFID tag and listens to response
@@ -121,13 +121,13 @@ def readRequest():
     
     Returns: (False, 'Not connected to RF device. Check connection')
     '''
+    received = ''
     try: 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(1) #1 second timeout period to connect to device
         sock.connect(addr)
         reg_addr = hex(0)[2:].zfill(4).decode('hex')
         word_count = hex(64)[2:].zfill(4).decode('hex')
-        received = ''
         for i in range(2):
             query = strToHex('000000000006FF03') + reg_addr + word_count
             sock.settimeout(2) #2 second timeout period for RFID tag pickup and query
@@ -164,6 +164,7 @@ def writeRequest(filename):
     
     Returns: (False, 'Error occurred. 04: Code Failure in slave device')
     '''
+    received = ''
     try:
         xml = xmlRead(filename)
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -172,7 +173,6 @@ def writeRequest(filename):
         reg_addr = hex(0)[2:].zfill(4).decode('hex')
         word_count = hex(64)[2:].zfill(4).decode('hex')
         byte_count = hex(128)[2:].zfill(2).decode('hex')
-        received = ''
         for i in xml:
             query = strToHex('000000000087FF10') + reg_addr + word_count + byte_count + i
             sock.settimeout(2) #2 second timeout period for FR tag pickup and query
@@ -256,11 +256,11 @@ def lock():
     
     Returns: lock(False, '')
     '''
+    received = ''
     try:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout(1) #1 second timeout period to connect to device
         sock.connect(addr)
-        received = ''
         query = strToHex('00000000000BFF10A20000020400000001')
         sock.settimeout(2) #2 second timeout period for FR tag pickup and query
         sock.sendall(query)
