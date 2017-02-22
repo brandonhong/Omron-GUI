@@ -77,7 +77,7 @@ def hexToStr(string):
 def xmlRead(filename):
     '''Reads the values of the all value subelements
     
-    Example: xmlRead('C:\Users\RapidsSolutionsCanad\Desktop\example.xml')
+    Example: xmlRead('C:\Users\Default\Desktop\example.xml')
     
     Returns: ('\x00\x00\x00\x00\x00\x00', '\x00\x00\x00\x00\x00\x00') 
     '''
@@ -156,11 +156,11 @@ def readRequest():
 def writeRequest(filename):
     '''Requests to write to RFID tag. Waits for the Reader to pick up tag then writes to it
     
-    Example: writeRequest('C:\Users\RapidsSolutionsCanad\Desktop\example.xml')
+    Example: writeRequest('C:\Users\Default\Desktop\example.xml')
     
     Returns: (True, '000000000006ff1000000040000000000006ff1000400040')
     
-    Example: writeRequest('C:\Users\RapidsSolutionsCanad\Desktop\example.xml')
+    Example: writeRequest('C:\Users\Default\Desktop\example.xml')
     
     Returns: (False, 'Error occurred. 04: Code Failure in slave device')
     '''
@@ -201,7 +201,7 @@ def writeRequest(filename):
 def verifyWrite(filename):
     '''Verifies the contents of the RFID tag is the same as the original xml file
 
-    Example: verifyWrite('C:\Users\RapidsSolutionsCanad\Desktop\works.xml')
+    Example: verifyWrite('C:\Users\Default\Desktop\works.xml')
     
     Returns: (True, 'ffffffffff...')
     '''
