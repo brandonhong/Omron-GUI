@@ -130,7 +130,7 @@ def readRequest():
         word_count = hex(64)[2:].zfill(4).decode('hex')
         for i in range(2):
             query = strToHex('000000000006FF03') + reg_addr + word_count
-            sock.settimeout(2) #2 second timeout period for RFID tag pickup and query
+            sock.settimeout(2) #2 second timeout period for RF tag pickup and query
             sock.sendall(query)
             data = sock.recv(1024)
             if data[7] == '83'.decode('hex'):
@@ -175,7 +175,7 @@ def writeRequest(filename):
         byte_count = hex(128)[2:].zfill(2).decode('hex')
         for i in xml:
             query = strToHex('000000000087FF10') + reg_addr + word_count + byte_count + i
-            sock.settimeout(2) #2 second timeout period for FR tag pickup and query
+            sock.settimeout(2) #2 second timeout period for RF tag pickup and query
             sock.sendall(query)
             data = sock.recv(1024)
             if data[7] == '90'.decode('hex'):
@@ -262,7 +262,7 @@ def lock():
         sock.settimeout(1) #1 second timeout period to connect to device
         sock.connect(addr)
         query = strToHex('00000000000BFF10A20000020400000001')
-        sock.settimeout(2) #2 second timeout period for FR tag pickup and query
+        sock.settimeout(2) #2 second timeout period for RF tag pickup and query
         sock.sendall(query)
         data = sock.recv(1024)
         if data[7] == '90'.decode('hex'):
