@@ -47,3 +47,18 @@ Updated function discriptions of each function with example inputs and outputs.
 Updated purpose discription.
 Added makeRFFile() function to print a list of 256 numbers in similar format of xml-files read-in and writes an xml-file in the same format.
 Added lock() function to lock the writing feature of RFID tags. Cannot be unlocked once locked.
+
+Update to v0.0.6
+
+GUI:
+Added a menubar with file and help options. File allows the user to browse for the xml-file as an alternative to the browse button. Also works with Ctrl+O.
+Help menu allows the user to check for current release versions of the GUI and interface library, connection and operation time of the Reader, the current communications error log of the Reader (up to 8 entries), and a error code library.
+
+Interface:
+Modified the way that xmlRead() works to account for little endian storing. Also set the variables to be split into 128 length instead of length/2. The xml-files are expected to be 256 characters or less.
+writeRequest() fills contents with \x00 if it writes less than 128 characters.
+verifyWrite() now bools the contents of the RF tag up to the length of the xml-file to account for lengths shorter than 256.
+The errLibrary dictionary now encludes all error codes defined in the Omron user guide.
+Added printErrLib() function to print the error codes in a nice format
+Added getCommErrLog() function to print the 8 most recent communications errors.
+Added aboutLib() function to return version of Interface Library.
