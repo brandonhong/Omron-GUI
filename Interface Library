@@ -11,12 +11,32 @@ import socket
 from time import sleep
 import xml.etree.ElementTree as et
 from textwrap import wrap
-
 addr = ('192.168.178.2', 502)
 
-errLibrary = {'01': 'Illegal function', '02': 'Illegal data address',
-              '03': 'Illegal data value', '04': 'Failure in slave device',
-              '06': 'Slave device busy'}
+errLibrary = {'01': 'Illegal function',
+'02': 'Illegal data address',
+'03': 'Illegal data value',
+'04': 'Failure in slave device',
+'06': 'Slave device busy',
+'0001': 'Processing was cancelled when a STOP query was received before an RF tag was detected',
+'0002': 'Processing was aborted when a STOP query was received during communications with an RF tag',
+'1001': 'A frame with a length that exceeded the protocol specification was received',
+'1002': 'The frame header did not agree with the protocol specifications',
+'1003': 'A query that is not supported by the Reader/Writer was received',
+'1004': 'There was an error in the format of the received query data',
+'1005': 'There was an error in the parameters in the received query data',
+'1006': 'The Reader/Writer could not execute the query that was received',
+'1010': 'A response could not be returned for a query that was received by the Reader/Writer',
+'2001': 'There is no RF tag in the communications area',
+'2002': 'Communications with the RF tag did not end normally',
+'2003': 'An RF tag with the specified ID was not in the communications area',
+'2004': 'The access address for the RF tag is outside of the area supported by the target RF tag',
+'2005': 'An attempt was made to write data to a locked area',
+'2006': 'Processing to write data to the RF tag did not end normally',
+'2007': 'Processing to write data to the RF Tag did not end normally (Data may have been lost and must be restored)',
+'2008': 'The RF tag returned an error response',
+'2009': 'The overwrite limit was exceeded for overwrite count control processing',
+'200A': 'When copying data, communications could not be established with the copy destination Reader/Writer'}
 
 def setTCP_IP(curr_addr, addr, subnet, gateway):
     '''Sets IP address, subnet, and gateway. Write in format 'xxxxxxxxxxxx' to represent xxx.xxx.xxx.xxx
@@ -43,7 +63,10 @@ def setTCP_IP(curr_addr, addr, subnet, gateway):
     data = sock.recv(1024)
     print repr(data)
     sock.close()
-    
+
+def aboutLib():
+    return '0.0.7'
+
 def errLib(code):
     '''Returns definition of the error code
     
@@ -52,7 +75,14 @@ def errLib(code):
     Returns: 'Illegal function'
     '''
     global errLibrary
-    return errLibrary.get(code)
+    return errLibrary.get(code, "Unknown error")
+    
+def printErrLib():
+    global errLibrary
+    errors = ''
+    for key in errLibrary:
+        errors += '{} :\t\t{}\n'.format(key, errLibrary.get(key))
+    return errors
 
 def strToHex(string):
     '''Converts a string to hex format for sending. Must be string
@@ -91,10 +121,20 @@ def xmlRead(filename):
         for vals in value:
             query += hex(vals)[2:].zfill(2).decode('hex')
 #            query2 += hex(vals)[2:].zfill(2)
-        
-    first = query[:len(query)/2]
-    second = query[len(query)/2:]
-    return first, second
+
+    first = query[:128]
+    second = query[128:]
+    s1 = ''
+    s2 = ''
+    temp = []
+    count = 0
+    for j in range(len(first)/4):
+        s1 += first[count:count+4][::-1]
+        s2 += second[count:count+4][::-1]
+        count += 4
+    temp.append(s1)
+    temp.append(s2)
+    return temp
 
 def stop(sock):
     '''Terminates the RFID read/write operation
@@ -136,11 +176,10 @@ def readRequest():
             if data[7] == '83'.decode('hex'):
                 stop(sock)
                 sock.close()
-#                print repr(data)
-                return False, ('Error occurred. {}: Code {}'.format(data[8:].encode('hex'), errLib(data[8:].encode('hex'))))
+                return False, ('Error occurred. {}: Code {}\nDetails: {}'.
+                format(data[8:].encode('hex'), errLib(data[8:].encode('hex')), errLib()))
             received += data[9:]
             reg_addr = word_count
-#            print repr(data).decode('hex')
             sleep(.5) 
         sock.close()
         return True, received.encode('hex')
@@ -174,6 +213,9 @@ def writeRequest(filename):
         word_count = hex(64)[2:].zfill(4).decode('hex')
         byte_count = hex(128)[2:].zfill(2).decode('hex')
         for i in xml:
+            if len(i) < 128:
+                while len(i) < 128:
+                    i += hex(0)[2:].zfill(2).decode('hex')
             query = strToHex('000000000087FF10') + reg_addr + word_count + byte_count + i
             sock.settimeout(2) #2 second timeout period for RF tag pickup and query
             sock.sendall(query)
@@ -181,9 +223,7 @@ def writeRequest(filename):
             if data[7] == '90'.decode('hex'):
                 stop(sock)
                 sock.close()
-#                print repr(data)
                 return False, ('Error occurred. {}: Code {}'.format(data[8:].encode('hex'), errLib(data[8:].encode('hex'))))
-#            print data.encode('hex')
             received += data
             reg_addr = word_count
             sleep(.5)
@@ -207,7 +247,7 @@ def verifyWrite(filename):
     '''
     xml = ''.join(xmlRead(filename)).encode('hex')
     received = readRequest()[1]
-    return (received == ''.join(xml)), received
+    return (received[:len(xml)] == ''.join(xml)), received
 
 def makeRFFile(string):
     '''Returns decimal representation of hex string similar to representation in xml file as well as create the xml file as output.xml
@@ -269,10 +309,95 @@ def lock():
             stop(sock)
             sock.close()
             return False, ('Error occurred. {}: Code {}'.format(data[8:].encode('hex'), errLib(data[8:].encode('hex'))))
-#            print data.encode('hex')
         received += data
         sock.close()
         return True, received.encode('hex')
+    except Exception:
+#        print exception, ': ' + 'lock() did not work'
+        stopped = stop(sock)
+        sock.close()
+        if stopped:
+            return False, received.encode('hex')
+        else:
+            return False, "Not connected to RF device. Check connection"
+    
+def getCommErrLog():
+    '''Verbose communications error discription with timestamp since the Omron device was powered on. Reports most recent first
+    
+    Example: getCommErrLog()
+
+    Returns: (True, 
+    '@ 1h:5m:26s Error 1010: A response could not be returned for a query that was received by the Reader/Writer\n')
+    '''
+    received = ''
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(1) #1 second timeout period to connect to device
+        sock.connect(addr)
+        query = strToHex('000000000006FF03C6000061') #accesses communications error log
+        sock.settimeout(2) #2 second timeout period for RF tag pickup and query
+        sock.sendall(query)
+        data = sock.recv(1024)
+        if data[7] == '83'.decode('hex'):
+            stop(sock)
+            sock.close()
+            return False, ('Error occurred. {}: Code {}'.format(data[8:].encode('hex'), errLib(data[8:].encode('hex'))))
+        received += data
+        sock.close()
+        numErrs = int(received.encode('hex')[21])
+        received = received.encode('hex')[22:]
+        count = 0
+        errors = ''
+        for i in range(numErrs):
+            error = received[count+48*i:count+48*(1+i)]
+            m, s = divmod(int('0x' + error[:8], 0)/1000, 60)
+            h, m = divmod(m, 60)
+            error = error[-8:-4]
+            errors += '@ {}h:{}m:{}s\tError {}:\t{}\n'.format(h, m, s, error, errLib(error))
+        if errors == '':
+            return True, "No errors found"
+        else:
+            return True, errors
+    except Exception:
+#        print exception, ': ' + 'lock() did not work'
+        stopped = stop(sock)
+        sock.close()
+        if stopped:
+            return False, received.encode('hex')
+        else:
+            return False, "Not connected to RF device. Check connection"
+            
+def getOpTime():
+    '''Returns the operation time of the RF device since power on
+    
+    Example: getOpTime()
+
+    Returns: (True, '1h:00m:00s')
+
+    Example: getOpTime()
+
+    Returns: (False, 'Not connected to RF device. Check connection')
+    '''
+    
+    received = ''
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(1) #1 second timeout period to connect to device
+        sock.connect(addr)
+        query = strToHex('000000000006FF03C4000002')
+        sock.sendall(query)
+        data = sock.recv(1024)
+        if data[7] == '83'.decode('hex'):
+            stop(sock)
+            sock.close()
+            return False, ('Error occurred. {}: Code {}'.format(data[8:].encode('hex'), errLib(data[8:].encode('hex'))))
+        received += data
+        sock.close()
+        received = received.encode('hex')[-8:]
+        m, s = divmod(int('0x' + received, 0)/1000, 60)
+        h, m = divmod(m, 60)
+        received = 'Connected\nCurrent operation time is {}h:{}m:{}s'.format(h, m, s)
+        return True, received
     except Exception:
 #        print exception, ': ' + 'lock() did not work'
         stopped = stop(sock)
