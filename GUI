@@ -13,7 +13,7 @@ import tkMessageBox
 import tkFileDialog
 from _RFID import *
 
-version = '0.0.5'
+version = '0.0.6'
 
 class GUI(Tk):
     def __init__(self, parent):
@@ -22,14 +22,12 @@ class GUI(Tk):
         self.initialize()
         
     def initialize(self):
-        global callback
-        global filename
-        global fileOpts
-        global count
-        count = 0
-        filename = ''
-        fileOpts = dict(defaultextension='.xml', filetypes=[('Lot Parameter File','*.xml')])
-        callback = False                     
+        self.count = 0
+        self.filename = ''
+        self.fileOpts = dict(defaultextension='.xml', filetypes=[('Lot Parameter File','*.xml')])
+        self.callback = False                     
+        
+        self.bind("<Control-o>", self.browse_event)
         
         self.entryText = StringVar(self)         
         self.entryText.set("Upload Lot Parameter File...")
@@ -50,12 +48,11 @@ class GUI(Tk):
         
         self.counter = StringVar(self)
         self.status = Label(self, width = 18, textvariable = self.counter) 
-        self.counter.set("Successful Writes: {}".format(count))
+        self.counter.set("Successful Writes: {}".format(self.count))
         
         self.lock = IntVar(self)
         self.lockCheck = Checkbutton(self, text = "Lock after write", variable = self.lock)
-                
-        self.grid()
+        
         self.entry.grid(row = 0, column = 0, padx = 20, pady = 20)
         self.browse.grid(row = 0, column = 1, sticky = W, padx = 5)
         self.close.grid(row = 0, column = 2, sticky = W, padx = 5)
@@ -64,45 +61,129 @@ class GUI(Tk):
         self.status.grid(row = 2, column = 1, columnspan = 2, sticky = EW)
         self.detailsTitle.grid(row = 2, column = 0, sticky = W, padx = 20)
         self.details.grid(row = 3, column = 0, padx = 20, pady = 5, sticky = W)
+        
+        self.menubar = Menu(self)
+        self.filemenu = Menu(self.menubar, tearoff = 0)
+        self.filemenu.add_command(label = "Open...     Ctrl+O", command = self.browse_dir)
+        self.filemenu.add_separator()
+        self.filemenu.add_command(label = "Quit...       Alt+F4", command = self.on_closing)
+        self.menubar.add_cascade(label = "File", menu = self.filemenu)
+        
+        self.helpmenu = Menu(self.menubar, tearoff = 0)
+        self.helpmenu.add_command(label = "About", command = self.about)
+        self.helpmenu.add_command(label = "Check Connection/Operation Time", command = self.checkConnection)
+        self.helpmenu.add_command(label = "Error Definitions", command = self.aboutErrors)
+        self.helpmenu.add_command(label = "Error Log", command = self.errLog)
+        self.menubar.add_cascade(label = "Help", menu = self.helpmenu)
+        
+        self.config(menu = self.menubar)
     
     def browse_dir(self):
-        global callback
-        global fileOpts
         tempName = self.entry.get()
         self.entry_callback(self)
         self.entry.delete(0, "end")
-        self.entry.insert(0, tkFileDialog.askopenfilename(**fileOpts))
+        self.entry.insert(0, tkFileDialog.askopenfilename(**self.fileOpts))
         if self.entry.get() == '':
             if tempName  == "Upload Lot Parameter File...":
-                callback = False
+                self.callback = False
                 self.entry.config(fg = "gray")
             else:                
                 self.entry.insert(0, tempName)
         
+    def browse_event(self, event):
+        self.browse_dir()
+        
     def entry_callback(self, event):
-        global callback
-        if callback == False:        
+        if self.callback == False:        
             self.entry.delete(0, "end")
             self.entry.config(fg = "black")
-            callback = True
+            self.callback = True
     
-    def combine_funcs(self, *funcs):
-        def combined_func(*args, **kwargs):
-            for f in funcs:
-                f(*args, **kwargs)
-        return combined_func
+#    def combine_funcs(self, *funcs):
+#        def combined_func(*args, **kwargs):
+#            for f in funcs:
+#                f(*args, **kwargs)
+#        return combined_func
             
     def on_closing(self):
         if tkMessageBox.askokcancel("Quit", "Are you sure you want to quit?"):
-            self.destroy()            
+            self.destroy()
             
+    def about(self):
+        try:
+            self.aboutWin.focus_set()
+        except Exception:
+            self.aboutWin = Toplevel(self)
+            self.aboutWin.attributes("-toolwindow", 1)
+            self.aboutWin.wm_title("About")
+            
+            self.aboutLabel = Label(self.aboutWin, text = 'For internal use only.\nThis software is provided "as is"\nwithout any further warrenties.\n\nGUI Version: {}\nLibrary Version: {}'.format(version, aboutLib()))
+            self.closeAbout = Button(self.aboutWin, width = 9, text = "Close", command = self.aboutWin.destroy)
+            
+            self.aboutLabel.grid(row = 0, pady = (20, 0))
+            self.closeAbout.grid(row = 1, pady = 20)
+        
+    def aboutErrors(self):
+        try:
+            self.errWin.focus_set()
+        except Exception:
+            self.errWin = Toplevel(self)
+            self.errWin.attributes("-toolwindow", 1)
+            self.errWin.wm_title("Error Code Library and Definitions")
+            self.errLabel = Message(self.errWin, text = "Error code\tDescription\n\n{}".format(printErrLib()))
+            
+            self.errLabel.grid(row = 0)
+        
+    def errLog(self):
+        try:
+            self.logWin.focus_set()
+        except Exception:
+            self.logWin = Toplevel(self)
+            self.logWin.attributes("-toolwindow", 1)
+            self.logWin.wm_title("Error Log")
+            self.logTitle = Label(self.logWin, text = "Logs up to the 8 most recent error entries\n")
+            
+            self.text = getCommErrLog()[1]
+            self.log = Message(self.logWin, text = "Time of Error\tError code\tDescription\nsince power on\n\n{}"
+            .format(self.text), width = 1000)
+            self.copyLog = Button(self.logWin, text = "Copy log to clipboard", command = self.copy)
+            self.copyStatus = StringVar(self)
+            self.copied = Label(self.logWin, textvariable = self.copyStatus)
+            
+            self.logTitle.grid(row = 0, pady = (20, 0))
+            self.log.grid(row = 1)
+            self.copyLog.grid(row = 2)
+            self.copied.grid(row = 3)
+        
+    def copy(self):
+        try:
+            self.clipboard_clear()
+            self.clipboard_append(self.text)
+            self.copyStatus.set("Copied to clipboard")
+        except Exception:
+            self.copyStatus.set("Copy failed")
+        
+    def checkConnection(self):
+        try: 
+            self.connectionWin.destroy()
+        except Exception:
+            pass
+        self.connectionWin = Toplevel(self)
+        self.connectionWin.attributes("-toolwindow", 1)
+        self.connectionWin.wm_title("Check Connection")
+        
+        self.time = Label(self.connectionWin, text = getOpTime()[1])
+        self.closeConnection = Button(self.connectionWin, width = 9, text = "Close", command = self.connectionWin.destroy)
+        
+        self.time.grid(row = 0, padx = 20, pady = (20, 0))
+        self.closeConnection.grid(row = 1, pady = (20, 20))
+                    
     def reader(self):
-        global filename
-        filename = self.entry.get()
-        if os.path.isfile(filename) and filename.endswith(".xml"):
-            written, details = writeRequest(filename)
+        self.filename = self.entry.get()
+        if os.path.isfile(self.filename) and self.filename.endswith(".xml"):
+            written, details = writeRequest(self.filename)
             if written and details == "000000000006ff1000000040000000000006ff1000400040":
-                verify, read = verifyWrite(filename)
+                verify, read = verifyWrite(self.filename)
             elif (not written and details == '') or (not written and details == "000000000006ff1000000040"):
                 self.deets.set("RF tag write failed. Timed out")
                 return False
@@ -116,12 +197,11 @@ class GUI(Tk):
                 self.deets.set("Unknown error occurred during write")
                 return False
             if verify and len(read) == 512:
-                global count
-                count += 1
-                self.counter.set("Successful Writes: {}".format(count))
-                if self.lock.get() == 1:
+                if self.lock.get() == True:
                     lockTag = lock()
                     if lockTag == (True, "000000000006ff10a2000002"):
+                        self.count += 1
+                        self.counter.set("Successful Writes: {}".format(self.count))
                         self.deets.set("Write complete\nLocked")
                         return True
                     elif lockTag[0] == False and lockTag[1][:14] == "Error occurred":
@@ -134,6 +214,8 @@ class GUI(Tk):
                         self.deets.set("Write complete but lock failed. Not connected to RF device. Check connection")
                         return False
                 else:
+                    self.count += 1
+                    self.counter.set("Successful Writes: {}".format(self.count))
                     self.deets.set("Write complete")
                     return True
             elif (not verify and read == '') or (not verify and len(read) == 256):
